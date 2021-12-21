@@ -1,3 +1,5 @@
+const { server } = require("lite-server/lib/config-defaults");
+
 let db;
 
 const request = indexedDB.open('budgettrack', 1);
@@ -18,3 +20,36 @@ request.onsuccess = (evt) => {
 request.onerror = (evt) => {
     console.log(evt.target.errorCode);
 };
+
+function saveRecord(record) {
+    const transaction = db.transaction('pending', 'readwrite');
+    const store = transaction.objectStore('pending');
+    store.add(record);
+}
+
+function checkDb() {
+    const transaction = db.transaction('pending', 'readonly');
+    const store = transaction.objectStore('pending');
+    const getAll = store.getAll();
+
+    getAll.onsuccess = () => {
+        if (getAll.result.length > 0) {
+            fetch ('api/transaction/bulk', {
+                method: 'POST',
+                body: JSON.stringify(getAll.result),
+                headers: {
+                    Accept: 'application/json, text/plain, */*',
+                    'Content-Type': 'application/json'
+                }
+            })
+            .then(response => response.json())
+            .then(() => {
+                const transaction = db.transaction('pending', 'readwrite');
+                const store = transaction.objectStore('pending');
+                store.clear();
+            });
+        }
+    };  
+}
+
+window.addEventListener('online', checkDb);
