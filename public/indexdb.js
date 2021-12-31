@@ -12,13 +12,14 @@ request.onupgradeneeded = (evt) => {
 request.onsuccess = (evt) => {
     db = evt.target.result;
 
+    // is app online before looking at database?
     if (navigator.onLine) {
         checkDb();
     }
 };
 
 request.onerror = (evt) => {
-    console.log(evt.target.errorCode);
+    console.log('Error!' * evt.target.errorCode);
 };
 
 function saveRecord(record) {

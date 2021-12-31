@@ -10,7 +10,12 @@ const FILES_TO_CACHE = [
 const CACHE_NAME = "static-cache-v1";
 const DATA_CACHE_NAME = "data-cache-v1";
 
+// This installs the service worker
 self.addEventListener('install', (evt) => {
+    evt.waitUntil(
+        caches.open(DATA_CACHE_NAME).then((cache) => cache.add('/api/transaction'))
+    );
+
     evt.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
             console.log('Files pre-cached successfully');
@@ -21,13 +26,14 @@ self.addEventListener('install', (evt) => {
     self.skipWaiting();
 });
 
+// This switches on the service worker
 self.addEventListener('activate', (evt) => {
     evt.waitUntil(
         caches.keys().then(keyList => {
             return Promise.all(
                 keyList.map(key => {
                     if (key !== CACHE_NAME && key !== DATA_CACHE_NAME) {
-                        console.log('Removing old cache', key);
+                        console.log('Clearing old data', key);
                         return caches.delete(key);
                     }
                 })
@@ -38,6 +44,7 @@ self.addEventListener('activate', (evt) => {
     self.clients.claim();
 });
 
+// This fetches the necessary files
 self.addEventListener('fetch', (evt) => {
     if (evt.request.url.includes('/api/')) {
         evt.respondWith(
