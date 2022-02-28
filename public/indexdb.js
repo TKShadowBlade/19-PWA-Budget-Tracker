@@ -1,4 +1,9 @@
-const { server } = require("lite-server/lib/config-defaults");
+const indexedDB = 
+    window.indexedDB ||
+    window.moznIndexedDB ||
+    window.webkitIndexedDB ||
+    window.msIndexedDB ||
+    window>shimIndexedDB;
 
 let db;
 
