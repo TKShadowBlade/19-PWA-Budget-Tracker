@@ -1,29 +1,26 @@
+const CACHE_NAME = "static-cache-v1";
+const DATA_CACHE_NAME = "data-cache-v1";
+
 const FILES_TO_CACHE = [
     "/",
     "/public/index.html",
     "/public/index.js",
     "/public/styles.css",
     "/public/icons/icon-192x192.png",
-    "/public/icons/icon-512x512.png"
+    "/public/icons/icon-512x512.png",
+    "/public/indexdb.js",
+    "/public/manifest.json"
 ];
-
-const CACHE_NAME = "static-cache-v1";
-const DATA_CACHE_NAME = "data-cache-v1";
 
 // This installs the service worker
 self.addEventListener('install', (evt) => {
-    evt.waitUntil(
-        caches.open(DATA_CACHE_NAME).then((cache) => cache.add('/api/transaction'))
-    );
-
+    
     evt.waitUntil(
         caches.open(CACHE_NAME).then((cache) => {
             console.log('Files pre-cached successfully');
             return cache.addAll(FILES_TO_CACHE)
         })
     );
-
-    self.skipWaiting();
 });
 
 // This switches on the service worker
@@ -51,11 +48,13 @@ self.addEventListener('fetch', (evt) => {
             caches.open(DATA_CACHE_NAME).then(cache => {
                 return fetch(evt.request)
                 .then(response => {
+                    // if response is good, clone and store in the cache
                     if (response.status === 200) {
                         cache.put(evt.request.url, response.clone());
                     }
                     return response;
                 })
+                // If network request fails, try to pull from the cache
                 .catch(err => {
                     return cache.match(evt.request);
                 });
@@ -65,8 +64,15 @@ self.addEventListener('fetch', (evt) => {
     }
 
     evt.respondWith(
-        caches.match(evt.request).then((response) => {
-            return response || fetch(evt.request);
+        fetch(evt.request).catch(() => {
+            return caches.match(evt.request).then((response) => {
+                if(response) {
+                    return response;
+                } else if (evt.request.headers.get('accept').includes('text/html')) {
+                    // return the cached homepage for all html page requests
+                    return caches.match('/');
+                }
+            })
         })
     );
 });
