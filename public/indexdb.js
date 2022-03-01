@@ -28,13 +28,13 @@ request.onerror = (evt) => {
 };
 
 function saveRecord(record) {
-    const transaction = db.transaction('pending', 'readwrite');
+    const transaction = db.transaction(['pending'], 'readwrite');
     const store = transaction.objectStore('pending');
     store.add(record);
 }
 
 function checkDb() {
-    const transaction = db.transaction('pending', 'readonly');
+    const transaction = db.transaction('pending', 'readwrite');
     const store = transaction.objectStore('pending');
     const getAll = store.getAll();
 
